@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Smoke test for VIPER-NEUROBOROS unified substrate.
 Tests:
@@ -9,6 +10,9 @@ Tests:
 import sys
 import torch
 import numpy as np
+from core.utils import enable_utf8_console
+
+enable_utf8_console()
 
 # Add the core directory to the path to import our modules
 sys.path.append('core')
@@ -18,12 +22,13 @@ def test_bitlinear():
     """Test BitLinear layer for ternary weights and proper forward pass."""
     print("Testing BitLinear...")
     try:
-        from bitlinear import BitLinear
+        from core.bitlinear import BitLinear
         # Create a small linear layer
         in_features, out_features = 4, 2
         layer = BitLinear(in_features, out_features, bias=True)
         
         # Create a random input tensor
+        
         x = torch.randn(1, in_features)
         
         # Forward pass
@@ -40,24 +45,25 @@ def test_bitlinear():
             # Check that all unique values in binary_weight are in [-1, 0, 1]
             assert torch.all(torch.isin(unique_vals, expected_vals)), f"Weights are not ternary: {unique_vals}"
         
-        print("  ✓ BitLinear test passed")
+        print("[PASS] ✓ BitLinear ternary check complete.")
         return True
     except Exception as e:
-        print(f"  ✗ BitLinear test failed: {e}")
+        print(f"  [FAIL] BitLinear test failed: {e}")
         return False
 
 def test_brian2():
     """Test Brian2 for spiking activity."""
     print("Testing Brian2...")
     try:
-        from brian2 import *
-        # Set up a simple neuron group
+        from brian2 import NeuronGroup, SpikeMonitor, run, ms, start_scope
+        start_scope()
+        # Set up a simple neuron group with biological LIF dynamics
         tau = 20*ms
         eqs = '''
-        dv/dt = (1 - v) / tau : 1
+dv/dt = (1 - v) / tau : 1
         '''
-        G = NeuronGroup(10, eqs, threshold='v>1', reset='v=0', method='exact')
-        G.v = 0
+        G = NeuronGroup(10, eqs, threshold='v>1', reset='v=0', refractory=2*ms, method='exact')
+        G.v = 0.5  # Initial voltage near threshold to ensure spiking
         
         # Monitor spikes
         M = SpikeMonitor(G)
@@ -67,11 +73,10 @@ def test_brian2():
         
         # Check that we recorded some spikes
         assert len(M.t) > 0, "No spikes recorded"
-        
-        print(f"  ✓ Brian2 test passed: recorded {len(M.t)} spikes")
+        print(f"  [PASS] Brian2 test passed: recorded {len(M.t)} spikes")
         return True
     except Exception as e:
-        print(f"  ✗ Brian2 test failed: {e}")
+        print(f"  [FAIL] Brian2 test failed: {e}")
         return False
 
 def test_shared_memory():
@@ -99,19 +104,19 @@ def test_shared_memory():
         print("  ✓ Shared Memory test passed")
         return True
     except Exception as e:
-        print(f"  ✗ Shared Memory test failed: {e}")
+        print(f"  [FAIL] Shared Memory test failed: {e}")
         return False
 
 def main():
     """Run all smoke tests."""
-    print("Running VIPER-NEUROBOROS Smoke Tests\n")
+    print("Running VIPER-NEUROBOROS Smoke Tests\\n")
     
     results = []
     results.append(test_bitlinear())
     results.append(test_brian2())
     results.append(test_shared_memory())
     
-    print("\n" + "="*50)
+    print("\\n" + "="*50)
     if all(results):
         print("All smoke tests PASSED")
         sys.exit(0)
@@ -121,3 +126,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

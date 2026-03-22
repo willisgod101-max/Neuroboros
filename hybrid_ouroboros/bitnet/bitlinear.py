@@ -110,7 +110,11 @@ class BitLinear(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
+        # Kaiming Uniform initialization scaled for ternary {-1, 0, 1} weights
         nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+        # Scale weights to approximately {-1, 0, 1} range after sign() operation
+        with torch.no_grad():
+            self.weight.div_(self.weight.abs().max().clamp(min=1e-5))
         # Initialize scaling factors to 1.0
         nn.init.ones_(self.weight_scale)
         nn.init.ones_(self.input_scale)

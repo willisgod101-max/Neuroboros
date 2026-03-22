@@ -14,4 +14,5 @@ DROSOPHILA_PARAMS = {
     'v0'     : 0   * mV,    # Resting potential
     'v_r'    : 0   * mV,    # Reset potential
     'v_th'   : 7   * mV,    # Spike threshold
+    'prune_threshold': 0.01,  # Weight threshold for pruning silent synapses
 }

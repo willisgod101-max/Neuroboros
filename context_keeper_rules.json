@@ -1,0 +1,32 @@
+{
+  "project_name": "VIPER-NEUROBOROS",
+  "version": "1.1.0",
+  "sacred_files": [
+    "VIPER_BUILD_PROMPT-2.md",
+    "NEUROBOROS_PROJECT_SPEC.md.pdf"
+  ],
+  "architectural_constraints": {
+    "weight_quantization": {
+      "type": "ternary",
+      "values": [-1, 0, 1],
+      "mechanism": "Straight-Through Estimator (STE)",
+      "mandatory": true
+    },
+    "activation_quantization": {
+      "default": "INT4",
+      "hybrid_intermediate": "INT8_Sparse",
+      "reference": "BitNet a4.8"
+    },
+    "biological_substrate": {
+      "engine": "Brian2",
+      "neuron_model": "Leaky Integrate-and-Fire (LIF)",
+      "target_firing_rate": "5Hz",
+      "plasticity": "STDP"
+    }
+  },
+  "forbidden_actions": [
+    "replace_bitlinear_with_nn_linear",
+    "modify_drosophila_params_without_validation",
+    "disable_astroreg_monitor"
+  ]
+}
