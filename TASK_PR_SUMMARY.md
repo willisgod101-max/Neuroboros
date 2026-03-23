@@ -1,0 +1,1 @@
+# Task PR Summary\n\n**Daemon Task Changes:**\n- daemon.py FastAPI server restore on port 8192\n- Pydantic-core runtime fixes (pip)\n- TODO.md startup guide\n- Repo cleaned\n\n**Status:** Clean, PR #1 open: https://github.com/willisgod101-max/Neuroboros/pull/1\n\n**Open Tabs Snapshot:** core/optimizer.py, daemon.py, training pipeline files.
