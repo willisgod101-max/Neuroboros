@@ -1,5 +1,7 @@
 import torch
 from brian2 import *
+from .equations import LIF_EQUATIONS, DROSOPHILA_PARAMS
+from hybrid_ouroboros.gpt.init_system import NeuroGenesis  # For FlyWire substrate
 
 class SNNBridge:
     def __init__(self, n_neurons=1000):
@@ -8,23 +10,23 @@ class SNNBridge:
         # Brian2 preferences for mobile/CPU
         prefs.codegen.target = 'numpy'
         
-        # Drosophila-grounded parameters from FlyWire
-        v_r = -65 * mV
-        v_th_base = -50 * mV
-        v_reset = -65 * mV
-        tau_V = 10 * ms
+        self.params = DROSOPHILA_PARAMS
+        # v_reset aligns with v_r for reset
         
-        # Leaky Integrate-and-Fire equations with linguistic_pressure modulation
-        eqs = '''
-        dv/dt = (v_r - v) / tau_V : volt
+        # Full LIF with conductance from FlyWire/Drosophila
+        eqs = LIF_EQUATIONS + '''
         linguistic_pressure : volt  # GPT loss → firing threshold modulation
         rate : Hz
         '''
         
-        self.group = NeuronGroup(n_neurons, eqs, threshold=f'v > v_th_base + linguistic_pressure', 
-                                reset='v = v_reset', method='euler')
-        self.group.v = v_r + rand(n_neurons) * (v_th_base - v_r)
-        self.group.linguistic_pressure = 0 * mV
+        self.group = NeuronGroup(n_neurons, eqs, namespace=self.params,
+                                threshold='v > v_th + linguistic_pressure',
+                                reset='v = v_r',
+                                refractory=self.params['tau_ref'],
+                                method='euler')
+        # Ground to FlyWire substrate (randomize to break synchrony)
+        NeuroGenesis.initialize_flywire_substrate(self, n_neurons)
+        self.group.linguistic_pressure = 0 * volt
         self.group.rate = 5 * Hz  # Baseline
         
         # Simple recurrent synapses for network dynamics
@@ -40,7 +42,7 @@ class SNNBridge:
     
     def step(self, pressure):
         # Update threshold from GPT Linguistic Pressure (0.0-1.0 → voltage)
-        self.group.linguistic_pressure = pressure * 10 * mV  # Scale to modulate firing
+        self.group.linguistic_pressure = pressure * self.params['v_th']  # Biological scale from FlyWire
         
         # Run one simulation timestep
         self.net.run(1 * ms)
